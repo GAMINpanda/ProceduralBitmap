@@ -7,6 +7,7 @@ namespace ProceduralBitmap
 {
     class Program
     {
+        public static string user = Environment.GetEnvironmentVariable("userprofile");
         static void Texture(Bitmap bitmap_peaks, Bitmap bitmap_grass)
         {
             var target = new Bitmap(bitmap_peaks.Width, bitmap_peaks.Height, PixelFormat.Format32bppArgb);
@@ -16,13 +17,34 @@ namespace ProceduralBitmap
             graphics.DrawImage(bitmap_peaks, 0, 0);
             graphics.DrawImage(bitmap_grass, 0, 0);
 
-            if (File.Exists(@"C:\Users\mitch\source\repos\ProceduralBitmap\Texture.bmp"))
-                File.Delete(@"C:\Users\mitch\source\repos\ProceduralBitmap\Texture.bmp"); //Replaces file
+            string path = user + @"\source\repos\ProceduralBitmap\Texture.bmp";
 
-            target.Save(@"C:\Users\mitch\source\repos\ProceduralBitmap\Texture.bmp", ImageFormat.Bmp);
+            if (File.Exists(path))
+                File.Delete(path); //Replaces file
+
+            target.Save(path, ImageFormat.Bmp);
         }
 
-        static void GrassGen(Bitmap bitmap_peaks) {
+        static Bitmap HeightMapOverlay(Bitmap bitmap_peaks1, Bitmap bitmap_peaks2)
+        {
+            int width = bitmap_peaks1.Width;
+            int height = bitmap_peaks2.Height;
+            int avg;
+
+            for (int x = 0; x < width; x++) //Finds average of heights between Bitmaps and sets the pixel to that average
+            {
+                for (int y = 0; y < height; y++)
+                {
+                    avg = (bitmap_peaks1.GetPixel(x, y).R) + (bitmap_peaks2.GetPixel(x, y).R);
+                    avg = Convert.ToInt32(avg / 2);
+                    bitmap_peaks1.SetPixel(x, y, Color.FromArgb(255, avg, avg, avg));
+                }
+            }
+
+            return bitmap_peaks1;
+        }
+
+        static void GrassWaterGen(Bitmap bitmap_peaks) {
             //Function to generate grass based off a given bitmap
             int width = bitmap_peaks.Width;
             int height = bitmap_peaks.Height;
@@ -37,15 +59,28 @@ namespace ProceduralBitmap
                 {
                     Pixel = bitmap_peaks.GetPixel(x, y);
 
-                    if (Pixel.R < 100)
+                    if (Pixel.R < 58) {
+                        bitmap_grass.SetPixel(x, y, Color.FromArgb(255, 35, 137, 218)); //supposed to be a nice shade of blue
+                    }
+
+                    else if (Pixel.R < 60)
                     {
-                        bitmap_grass.SetPixel(x, y, Color.FromArgb(255, 0, Pixel.R, 0));
+                        bitmap_grass.SetPixel(x, y, Color.FromArgb(255, 194, 178, 128)); //supposed to be a nice shade of blue
+                    }
+
+                    else
+                    {
+                        if (Pixel.R < 85)
+                        {
+                            bitmap_grass.SetPixel(x, y, Color.FromArgb(255, 0, Pixel.R, 0)); //Grass
+                        }
                     }
                 }
             }
 
             Texture(bitmap_peaks, bitmap_grass);
         }
+
         static void BitmapPeaksLong(string seed)
         {   //Function to create a bitmap that would be used for hilly terrain
             //points are the 'peaks' in the bitmap
@@ -142,13 +177,15 @@ namespace ProceduralBitmap
                 }
             }
 
-            if (System.IO.File.Exists(@"C:\Users\mitch\source\repos\ProceduralBitmap\Values.bmp"))
-                System.IO.File.Delete(@"C:\Users\mitch\source\repos\ProceduralBitmap\Values.bmp"); //Replaces file
+            string path = user + @"\source\repos\ProceduralBitmap\Values.bmp";
 
-            bitmap.Save(@"C:\Users\mitch\source\repos\ProceduralBitmap\Values.bmp", ImageFormat.Bmp);
+            if (System.IO.File.Exists(path))
+                System.IO.File.Delete(path); //Replaces file
+
+            bitmap.Save(path, ImageFormat.Bmp);
         }
 
-        static void BitmapPeaksShort(string seed)
+        static Bitmap BitmapPeaksShort(string seed)
         { //A procedure that attempts to improve on the long string method, don't need to input exact coordinates
             //seed in form resw,resh.num_peaks.generatorstring(12 chars long)
 
@@ -258,11 +295,12 @@ namespace ProceduralBitmap
                         y_prox = Convert.ToInt32(Math.Pow(y_prox, 2));
 
                         range_prox = Math.Sqrt(x_prox + y_prox) * 10; //Pythagoras to grasp proximity to point
-
-                        range_prox = (range_prox / radius);
+                        range_prox = (range_prox / (radius + 0.1));
 
                         Pixel = bitmap.GetPixel(x, y);
                         Location_cur = Pixel.R; //Gets red value of current pixel
+
+                        //Console.WriteLine("radius: {0}, range_prox: {1}, rough: {2}",radius, range_prox,rough);
 
                         if (radius > 255) { radius = 255; }//changing radius just for height generation
 
@@ -284,12 +322,7 @@ namespace ProceduralBitmap
                 }
             }
 
-            GrassGen(bitmap);
-
-            if (File.Exists(@"C:\Users\mitch\source\repos\ProceduralBitmap\Values.bmp"))
-                File.Delete(@"C:\Users\mitch\source\repos\ProceduralBitmap\Values.bmp"); //Replaces file
-
-            bitmap.Save(@"C:\Users\mitch\source\repos\ProceduralBitmap\Values.bmp", ImageFormat.Bmp);
+            return bitmap;
         }
 
         static void BitmapType(string seed)
@@ -302,7 +335,27 @@ namespace ProceduralBitmap
             }
             else
             {
-                BitmapPeaksShort(seed);
+                Bitmap bitmap_peaks = BitmapPeaksShort(seed);
+                Bitmap bitmap_peaks2;
+
+                //---
+                for (int i = 0; i < 2; i++)
+                {
+                    bitmap_peaks2 = BitmapPeaksShort(BitmapSeedGen("256,256")); //Generates two different Bitmaps
+
+                    bitmap_peaks = HeightMapOverlay(bitmap_peaks, bitmap_peaks2); //Overlays for further variety
+                }
+                //--- This small section makes a far more realistic height map
+                
+
+                GrassWaterGen(bitmap_peaks); //Generates Grass Texture
+
+                string path = user + @"\source\repos\ProceduralBitmap\Values.bmp";
+
+                if (File.Exists(path))
+                    File.Delete(path); //Replaces file
+
+                bitmap_peaks.Save(path, ImageFormat.Bmp);
             }
         }
 
@@ -327,13 +380,14 @@ namespace ProceduralBitmap
 
             return seed;
         }
+
         static void Main(string[] args)
         { //Will be no main function later, will just be a library
             //BitmapType("256,256.50.321456123441"); //Short seed
-            //BitmapType("500,500.5.212x2,7x400,400x56,250x25,42x150"); //Long seed --outdated--
+           //BitmapPeaksLong("512,512.1.265x256"); //Long seed --outdated--
             BitmapType(BitmapSeedGen("256,256"));
 
-            //Next Plan is to add some extra noise to have rougher terrain - can just generate a second height map and leyer them in some way 
+            //Next Plan is to add some extra noise to have rougher terrain - can just generate a second height map and layer them in some way 
         }
     }
 }
