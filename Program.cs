@@ -8,7 +8,7 @@ namespace ProceduralBitmap
     class Program
     {
         public static string user = Environment.GetEnvironmentVariable("userprofile");
-        static void Texture(Bitmap bitmap_peaks, Bitmap bitmap_grass)
+        static Bitmap Texture(Bitmap bitmap_peaks, Bitmap bitmap_grass, bool tf)
         {
             var target = new Bitmap(bitmap_peaks.Width, bitmap_peaks.Height, PixelFormat.Format32bppArgb);
             var graphics = Graphics.FromImage(target);
@@ -19,10 +19,69 @@ namespace ProceduralBitmap
 
             string path = user + @"\source\repos\ProceduralBitmap\Texture.bmp";
 
-            if (File.Exists(path))
-                File.Delete(path); //Replaces file
+            if (tf)
+            {
+                if (File.Exists(path))
+                    File.Delete(path); //Replaces file
 
-            target.Save(path, ImageFormat.Bmp);
+                target.Save(path, ImageFormat.Bmp);
+            }
+            return target;
+        }
+
+        static Bitmap TreesAndFoilageGen(string seed, Bitmap bitmap_grass)
+        {
+            //Function to add trees and foilage
+
+            string[] seedarray = seed.Split('.'); //Stop seperates sections e.g. resolution.peak_num.peak_points
+
+            string[] resolution = seedarray[0].Split(','); //Comma seperates values in sections e.g. width,height under resolution
+            int width = Convert.ToInt16(resolution[0]); //Res will stay low for now
+            int height = Convert.ToInt16(resolution[1]);
+
+            Bitmap bitmap_treesfoilage = new Bitmap(width, height);
+
+            int peak_num = Convert.ToInt32(seedarray[1]);
+
+            string generator_string = seedarray[2];
+            //Console.WriteLine(generator_string);
+            int generator_int = Convert.ToInt32(generator_string.Substring(0, 6));
+
+
+            int rand;
+            string randstring;
+            int len;
+            int x;
+            int y;
+            Color Pixel;
+
+            for (int i = 0; i < (peak_num * peak_num); i++)
+            {
+                rand = (i + 1) * (generator_int % (i + 1));
+                rand = Convert.ToInt32(rand / ((i * i) + 1));
+                randstring = Convert.ToString(rand);
+                len = randstring.Length;
+
+                if (len > 6)
+                {
+                    randstring = randstring.Substring(len - 4); //generating a random number each time
+                }  
+
+                rand = Convert.ToInt16(randstring);
+
+                x = (rand + 1) * (i + 1) % width;
+                y = (rand + 5) * ((i * i) + 1) % height;
+
+                Pixel = bitmap_grass.GetPixel(x, y);
+                //Console.WriteLine("x: {0}, y: {1}",x,y);
+
+                if (Pixel.G < 85 && Pixel.R == 0 && Pixel.G > 60)
+                {
+                    bitmap_treesfoilage.SetPixel(x, y, Color.FromArgb(255, 108, 59, 30)); //Nice brown
+                }
+            }
+
+            return bitmap_treesfoilage;
         }
 
         static Bitmap HeightMapOverlay(Bitmap bitmap_peaks1, Bitmap bitmap_peaks2)
@@ -44,7 +103,7 @@ namespace ProceduralBitmap
             return bitmap_peaks1;
         }
 
-        static void GrassWaterGen(Bitmap bitmap_peaks) {
+        static void GrassWaterGen(Bitmap bitmap_peaks, string seed) {
             //Function to generate grass based off a given bitmap
             int width = bitmap_peaks.Width;
             int height = bitmap_peaks.Height;
@@ -77,8 +136,8 @@ namespace ProceduralBitmap
                     }
                 }
             }
-
-            Texture(bitmap_peaks, bitmap_grass);
+            bitmap_grass = Texture(bitmap_grass, TreesAndFoilageGen(seed, bitmap_grass), false);
+            Texture(bitmap_peaks, bitmap_grass, true);
         }
 
         static void BitmapPeaksLong(string seed)
@@ -348,7 +407,7 @@ namespace ProceduralBitmap
                 //--- This small section makes a far more realistic height map
                 
 
-                GrassWaterGen(bitmap_peaks); //Generates Grass Texture
+                GrassWaterGen(bitmap_peaks, seed); //Generates Grass Texture
 
                 string path = user + @"\source\repos\ProceduralBitmap\Values.bmp";
 
