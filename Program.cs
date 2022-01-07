@@ -55,7 +55,7 @@ namespace ProceduralBitmap
             int y;
             Color Pixel;
 
-            for (int i = 0; i < (peak_num * peak_num); i++)
+            for (int i = 0; i < (peak_num * peak_num * 15); i++)
             {
                 rand = (i + 1) * (generator_int % (i + 1));
                 rand = Convert.ToInt32(rand / ((i * i) + 1));
@@ -67,10 +67,10 @@ namespace ProceduralBitmap
                     randstring = randstring.Substring(len - 4); //generating a random number each time
                 }  
 
-                rand = Convert.ToInt16(randstring);
+                rand = Convert.ToInt32(randstring);
 
-                x = (rand + 1) * (i + 1) % width;
-                y = (rand + 5) * ((i * i) + 1) % height;
+                x = Math.Abs((rand + 1) * (i + 1)) % width;
+                y = Math.Abs((rand + 5) * ((i * i) + 1)) % height;
 
                 Pixel = bitmap_grass.GetPixel(x, y);
                 //Console.WriteLine("x: {0}, y: {1}",x,y);
@@ -119,7 +119,7 @@ namespace ProceduralBitmap
                     Pixel = bitmap_peaks.GetPixel(x, y);
 
                     if (Pixel.R < 58) {
-                        bitmap_grass.SetPixel(x, y, Color.FromArgb(255, 35, 137, 218)); //supposed to be a nice shade of blue
+                        bitmap_grass.SetPixel(x, y, Color.FromArgb(255, 35, 137, 218)); //supposed to be a nice sand colour
                     }
 
                     else if (Pixel.R < 60)
@@ -136,6 +136,7 @@ namespace ProceduralBitmap
                     }
                 }
             }
+
             bitmap_grass = Texture(bitmap_grass, TreesAndFoilageGen(seed, bitmap_grass), false);
             Texture(bitmap_peaks, bitmap_grass, true);
         }
