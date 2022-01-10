@@ -111,20 +111,50 @@ namespace ProceduralBitmap
             Bitmap bitmap_grass = new Bitmap(width, height);
 
             Color Pixel;
+            Color PixelUp;
+            Color PixelDown;
+            Color PixelLeft;
+            Color PixelRight;
+            int score = 0;
 
             for (int x = 0; x < width; x++)
             {
                 for (int y = 0; y < height; y++)
                 {
+                    score = 0;
                     Pixel = bitmap_peaks.GetPixel(x, y);
 
-                    if (Pixel.R < 58) {
-                        bitmap_grass.SetPixel(x, y, Color.FromArgb(255, 35, 137, 218)); //supposed to be a nice sand colour
+                    //Surrounding Pixels, doesn't bother with outside layer of pixels since they won't be visible anyway in unity project
+                    if ((x > 1 && x < width - 1) && (y > 1 && y < height - 1))
+                    {
+                        PixelUp = bitmap_peaks.GetPixel(x, y + 1);
+                        PixelDown = bitmap_peaks.GetPixel(x, y - 1);
+                        PixelRight = bitmap_peaks.GetPixel(x + 1, y); ;
+                        PixelLeft = bitmap_peaks.GetPixel(x - 1, y);
+
+                        if (Pixel.R > 85 && Pixel.G == Pixel.R)
+                        {
+                            if (PixelUp.R > Pixel.R) {score++;}
+
+                            if (PixelDown.R > Pixel.R) {score++;}
+
+                            if (PixelLeft.R > Pixel.R) {score++;}
+
+                            if (PixelRight.R > Pixel.R) {score++;}
+
+                            if (score == 4) //needs to be enclosed on all sides
+                            {bitmap_grass.SetPixel(x, y, Color.FromArgb(255, 35, 137, 218));}
+                        }
+                    }
+
+                    if (Pixel.R < 58)
+                    {
+                        bitmap_grass.SetPixel(x, y, Color.FromArgb(255, 35, 137, 218)); //supposed to be a nice shade of blue
                     }
 
                     else if (Pixel.R < 60)
                     {
-                        bitmap_grass.SetPixel(x, y, Color.FromArgb(255, 194, 178, 128)); //supposed to be a nice shade of blue
+                        bitmap_grass.SetPixel(x, y, Color.FromArgb(255, 194, 178, 128)); //supposed to be a nice sand colour
                     }
 
                     else
