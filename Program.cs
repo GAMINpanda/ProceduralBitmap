@@ -103,6 +103,15 @@ namespace ProceduralBitmap
             return bitmap_peaks1;
         }
 
+        static bool IsWater(Color Pixel)
+        {
+            if (Pixel.R == 35 && Pixel.G == 137 && Pixel.B == 218)
+            {
+                return true;
+            }
+            else { return false; }
+        }
+
         static void GrassWaterGen(Bitmap bitmap_peaks, string seed) {
             //Function to generate grass based off a given bitmap
             int width = bitmap_peaks.Width;
@@ -134,15 +143,15 @@ namespace ProceduralBitmap
 
                         if (Pixel.R > 85 && Pixel.G == Pixel.R)
                         {
-                            if (PixelUp.R > Pixel.R) {score++;}
+                            if (PixelUp.R > Pixel.R || IsWater(PixelUp)) {score++;}
 
-                            if (PixelDown.R > Pixel.R) {score++;}
+                            if (PixelDown.R > Pixel.R || IsWater(PixelDown)) {score++;}
 
-                            if (PixelLeft.R > Pixel.R) {score++;}
+                            if (PixelLeft.R > Pixel.R || IsWater(PixelLeft)) {score++;}
 
-                            if (PixelRight.R > Pixel.R) {score++;}
-
-                            if (score == 4) //needs to be enclosed on all sides
+                            if (PixelRight.R > Pixel.R || IsWater(PixelRight)) {score++;}
+                            
+                            if (score >= 3) //At least three sides need to be higher
                             {bitmap_grass.SetPixel(x, y, Color.FromArgb(255, 35, 137, 218));}
                         }
                     }
