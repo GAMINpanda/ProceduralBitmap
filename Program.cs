@@ -480,6 +480,11 @@ namespace ProceduralBitmap
             return seed;
         }
 
+        static void CivilisationOverlay(Bitmap Texture)
+        {
+            //Function to create a seperate bitmap to outline houses
+        }
+
         static void Main(string[] args)
         { //Will be no main function later, will just be a library
             //BitmapType("256,256.50.321456123441"); //Short seed
