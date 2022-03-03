@@ -103,6 +103,43 @@ namespace ProceduralBitmap
             return bitmap_peaks1;
         }
 
+        static (int[], int[], int[]) CivilisationOverlay(string seed)
+        {
+            //Function to create a seperate bitmap to outline houses
+            //Map contains one large town and two villages
+
+            string[] seedarray = seed.Split('.');
+            string[] resolution = seedarray[0].Split(','); //Comma seperates values in sections e.g. width,height under resolution
+            int width = Convert.ToInt16(resolution[0]); //Res will stay low for now
+            int height = Convert.ToInt16(resolution[1]);
+
+            Bitmap bitmap = new Bitmap(width, height);
+
+            int peak_num = Convert.ToInt32(seedarray[1]);
+
+            string generator_string = seedarray[2];
+            //Console.WriteLine(generator_string);
+            long generator_int = Convert.ToInt64(generator_string);
+
+            //created so can use generator in different ways
+            int generator_int1 = Convert.ToInt32(generator_string.Substring(0, 3));
+            int generator_int2 = Convert.ToInt32(generator_string.Substring(3, 3));
+            int generator_int3 = Convert.ToInt32(generator_string.Substring(6, 3));
+            int generator_int4 = Convert.ToInt32(generator_string.Substring(9, 3));
+
+            int[] generator_list = new int[4] { generator_int1, generator_int2,
+                                                generator_int3, generator_int4
+            };
+
+            int[] coor1 = { Math.Abs(generator_list[0] - generator_list[1]) % width, Math.Abs(generator_list[1] - generator_list[2]) % height };
+            int[] coor2 = { Math.Abs(generator_list[2] - generator_list[3]) % width, Math.Abs(generator_list[3] - generator_list[0]) % height };
+            int[] coor3 = { Math.Abs(generator_list[0] - generator_list[2]) % width, Math.Abs(generator_list[1] - generator_list[3]) % height };
+
+            //coordinates on where to place villages
+
+            return (coor1, coor2, coor3);
+        }
+
         static bool IsWater(Color Pixel)
         {
             if (Pixel.R == 35 && Pixel.G == 137 && Pixel.B == 218)
@@ -456,6 +493,12 @@ namespace ProceduralBitmap
                     File.Delete(path); //Replaces file
 
                 bitmap_peaks.Save(path, ImageFormat.Bmp);
+
+                (int[] coor1, int[] coor2, int[] coor3) = CivilisationOverlay(seed);
+
+                Console.WriteLine("x: {0}, y: {1}", coor1[0],coor1[1]);
+                Console.WriteLine("x: {0}, y: {1}", coor2[0], coor2[1]);
+                Console.WriteLine("x: {0}, y: {1}", coor3[0], coor3[1]);
             }
         }
 
@@ -479,35 +522,6 @@ namespace ProceduralBitmap
             seed = res + "." + random.Next(50,101) + "." + seed;
 
             return seed;
-        }
-
-        static void CivilisationOverlay(Bitmap bitmap_peaks, string seed)
-        {
-            //Function to create a seperate bitmap to outline houses
-            //Houses only spawn on grass and near water in groups, map contains one large town and two villages
-
-            string[] seedarray = seed.Split('.');
-            string[] resolution = seedarray[0].Split(','); //Comma seperates values in sections e.g. width,height under resolution
-            int width = Convert.ToInt16(resolution[0]); //Res will stay low for now
-            int height = Convert.ToInt16(resolution[1]);
-
-            Bitmap bitmap = new Bitmap(width, height);
-
-            int peak_num = Convert.ToInt32(seedarray[1]);
-
-            string generator_string = seedarray[2];
-            //Console.WriteLine(generator_string);
-            long generator_int = Convert.ToInt64(generator_string);
-
-            //created so can use generator in different ways
-            int generator_int1 = Convert.ToInt32(generator_string.Substring(0, 3));
-            int generator_int2 = Convert.ToInt32(generator_string.Substring(3, 3));
-            int generator_int3 = Convert.ToInt32(generator_string.Substring(6, 3));
-            int generator_int4 = Convert.ToInt32(generator_string.Substring(9, 3));
-
-            int[] generator_list = new int[4] { generator_int1, generator_int2,
-                                                generator_int3, generator_int4
-            };
         }
 
         static void Main(string[] args)
