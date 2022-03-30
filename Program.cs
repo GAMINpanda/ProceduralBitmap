@@ -105,15 +105,27 @@ namespace ProceduralBitmap
 
         static (int[], int[], int[]) CivilisationOverlay(string seed)
         {
-            //Function to create a seperate bitmap to outline houses
-            //Map contains one large town and two villages
+            string path = user + @"\source\repos\ProceduralBitmap\Values.bmp";
+
+            Bitmap Texture = new Bitmap(path);
+
+            static bool CoorCheck(int x, int y, Bitmap Texture) { //Checks coordinates to see if they are ok for civilisation
+
+                int bitheight = Texture.GetPixel(x, y).R;
+
+                if (bitheight > 65)
+                {
+                    return true;
+                }
+                else { return false; }
+            }
+
+            //Function to find coords for civilisation
 
             string[] seedarray = seed.Split('.');
             string[] resolution = seedarray[0].Split(','); //Comma seperates values in sections e.g. width,height under resolution
             int width = Convert.ToInt16(resolution[0]); //Res will stay low for now
             int height = Convert.ToInt16(resolution[1]);
-
-            Bitmap bitmap = new Bitmap(width, height);
 
             int peak_num = Convert.ToInt32(seedarray[1]);
 
@@ -135,6 +147,37 @@ namespace ProceduralBitmap
             int[] coor2 = { Math.Abs(generator_list[2] - generator_list[3]) % width, Math.Abs(generator_list[3] - generator_list[0]) % height };
             int[] coor3 = { Math.Abs(generator_list[0] - generator_list[2]) % width, Math.Abs(generator_list[1] - generator_list[3]) % height };
 
+            bool isValid = false; //coordinates need to be at a satisfactory height
+
+            while (!isValid) //iterates until all coordinates are valid
+            {
+                bool valid1 = CoorCheck(coor1[0], coor1[1], Texture);
+                bool valid2 = CoorCheck(coor2[0], coor2[1], Texture);
+                bool valid3 = CoorCheck(coor2[0], coor2[1], Texture);
+
+                if ((valid1 || valid2 || valid3) == false)
+                {
+                    isValid = false;
+                }
+
+                if (!valid1)
+                {
+                    coor1[0] = coor1[0] + 1;
+                    coor1[1] = coor1[1] + 1;
+                }
+
+                if (!valid2)
+                {
+                    coor2[0] = coor2[0] + 1;
+                    coor2[1] = coor2[1] + 1;
+                }
+
+                if (!valid3)
+                {
+                    coor3[0] = coor3[0] + 1;
+                    coor3[1] = coor3[1] + 1;
+                }
+            }
             //coordinates on where to place villages
 
             return (coor1, coor2, coor3);
