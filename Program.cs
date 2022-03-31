@@ -113,11 +113,22 @@ namespace ProceduralBitmap
 
                 int bitheight = Texture.GetPixel(x, y).R;
 
-                if (bitheight > 65)
+                if (bitheight > 65) //has to be above water
                 {
                     return true;
                 }
                 else { return false; }
+            }
+
+            static int[] AssignNew(int[] coord, int count)
+            { //function to assign coordinate a nearby pixel that is valid
+                coord[0] = coord[0] + count;
+                coord[1] = coord[1] - count;
+
+                count++;
+                count = -1 * count;  //semi spiral pattern
+
+                return coord;
             }
 
             //Function to find coords for civilisation
@@ -147,35 +158,73 @@ namespace ProceduralBitmap
             int[] coor2 = { Math.Abs(generator_list[2] - generator_list[3]) % width, Math.Abs(generator_list[3] - generator_list[0]) % height };
             int[] coor3 = { Math.Abs(generator_list[0] - generator_list[2]) % width, Math.Abs(generator_list[1] - generator_list[3]) % height };
 
+            int count1 = 1;
+            int count2 = 1;
+            int count3 = 1;
+
             bool isValid = false; //coordinates need to be at a satisfactory height
 
-            while (!isValid) //iterates until all coordinates are valid
-            {
-                bool valid1 = CoorCheck(coor1[0], coor1[1], Texture);
-                bool valid2 = CoorCheck(coor2[0], coor2[1], Texture);
-                bool valid3 = CoorCheck(coor2[0], coor2[1], Texture);
+            bool valid1;
+            bool valid2;
+            bool valid3;
 
-                if ((valid1 || valid2 || valid3) == false)
+            while (!isValid)
+            {
+                coor1[0] = coor1[0] % width; coor1[1] = coor1[1] % height;
+                coor2[0] = coor2[0] % width; coor2[1] = coor2[1] % height;
+                coor3[0] = coor3[0] % width; coor3[1] = coor3[1] % height;
+
+                valid1 = CoorCheck(coor1[0], coor1[1], Texture);
+                valid2 = CoorCheck(coor2[0], coor2[1], Texture);
+                valid3 = CoorCheck(coor2[0], coor2[1], Texture);
+
+                if (!valid1 || !valid2 || !valid3)
                 {
                     isValid = false;
                 }
 
                 if (!valid1)
                 {
-                    coor1[0] = coor1[0] + 1;
-                    coor1[1] = coor1[1] + 1;
+                    if (count1 < 200)
+                    {
+                        coor1 = AssignNew(coor1, count1);
+                        count1++;
+                    }
+                    else
+                    {
+                        valid1 = true; //if by count 200 a good coord hasn't been found, give up
+                    }
                 }
 
                 if (!valid2)
                 {
-                    coor2[0] = coor2[0] + 1;
-                    coor2[1] = coor2[1] + 1;
+                    if (count2 < 200)
+                    {
+                        coor2 = AssignNew(coor2, count2);
+                        count2++;
+                    }
+                    else
+                    {
+                        valid2 = true; //if by count 200 a good coord hasn't been found, give up
+                    }
                 }
 
                 if (!valid3)
                 {
-                    coor3[0] = coor3[0] + 1;
-                    coor3[1] = coor3[1] + 1;
+                    if (count3 < 200)
+                    {
+                        coor3 = AssignNew(coor3, count3);
+                        count3++;
+                    }
+                    else
+                    {
+                        valid3 = true; //if by count 200 a good coord hasn't been found, give up
+                    }
+                }
+
+                if (valid1 && valid2 && valid3)
+                {
+                    isValid = true;
                 }
             }
             //coordinates on where to place villages
@@ -221,19 +270,16 @@ namespace ProceduralBitmap
                         PixelRight = bitmap_peaks.GetPixel(x + 1, y); ;
                         PixelLeft = bitmap_peaks.GetPixel(x - 1, y);
 
-                        if (Pixel.R > 85 && Pixel.G == Pixel.R)
-                        {
-                            if (PixelUp.R > Pixel.R || IsWater(PixelUp)) {score++;}
+                        if (PixelUp.R > Pixel.R || IsWater(PixelUp)) {score++;}
 
-                            if (PixelDown.R > Pixel.R || IsWater(PixelDown)) {score++;}
+                        if (PixelDown.R > Pixel.R || IsWater(PixelDown)) {score++;}
 
-                            if (PixelLeft.R > Pixel.R || IsWater(PixelLeft)) {score++;}
+                        if (PixelLeft.R > Pixel.R || IsWater(PixelLeft)) {score++;}
 
-                            if (PixelRight.R > Pixel.R || IsWater(PixelRight)) {score++;}
+                        if (PixelRight.R > Pixel.R || IsWater(PixelRight)) {score++;}
                             
-                            if (score >= 3) //At least three sides need to be higher
-                            {bitmap_grass.SetPixel(x, y, Color.FromArgb(255, 35, 137, 218));}
-                        }
+                        if (score >= 4) //At least three sides need to be higher
+                        {bitmap_grass.SetPixel(x, y, Color.FromArgb(255, 35, 137, 218));}
                     }
 
                     if (Pixel.R < 58)
